@@ -1,33 +1,32 @@
-# AdventureWorks BI (PostgreSQL + Power BI)
+# AdventureWorks BI: PostgreSQL to Power BI Analytics Platform
 
-Production-style BI portfolio project that transforms AdventureWorks OLTP data into a curated analytics layer and a multi-page Power BI report for executive and functional decision-making.
+End-to-end business intelligence project that transforms AdventureWorks OLTP data into a validated analytics layer and a multi-page Power BI reporting solution for executive and operational decision-making.
 
-## Problem Statement
+## Overview
 
-Raw transactional data is difficult to use directly in reporting. This project creates a reusable BI layer that answers critical business questions across:
+This project simulates a production BI workflow:
 
-- Executive performance and growth trends
-- Sales rep and territory performance
-- Product revenue and margin quality
-- Customer value and retention risk
-- Metric anomaly monitoring
+- Model transactional data into reusable analytical views in PostgreSQL
+- Validate output quality with automated SQL checks
+- Design a Power BI semantic model and dashboard pages
+- Document business insights and stakeholder-facing outputs
 
-## Solution Overview
+## Business Questions Answered
 
-The project implements:
-
-1. A dedicated PostgreSQL schema (`bi`) with reusable helper functions
-2. Analytical SQL views for each dashboard domain
-3. A validation script to check row counts, key nulls, duplicates, revenue sanity, and date ranges
-4. Power BI modeling and DAX guidance for report construction
+- How are revenue, orders, and average order value trending over time?
+- Which territories, salespeople, and products drive performance?
+- Which customer segments create the most value and where is risk increasing?
+- Which KPI movements are anomalous relative to historical behavior?
 
 ## Tech Stack
 
-- PostgreSQL (analytics layer)
-- SQL (view modeling + validation)
-- Power BI Desktop (semantic model + dashboards)
+- PostgreSQL
+- SQL (CTEs, window functions, aggregations, validation queries)
+- Power BI Desktop
 
-## BI Data Model (Views)
+## Analytics Layer
+
+Implemented BI views in schema `bi`:
 
 - `bi.vw_date_dimension`
 - `bi.vw_executive_kpis`
@@ -38,55 +37,49 @@ The project implements:
 - `bi.vw_hr_workforce`
 - `bi.vw_anomaly_variance`
 
-## Repository Structure
+## Data Quality and Validation
 
-- `db/setup.sql` - BI schema, role grants, and helper functions
-- `db/views/*.sql` - analytical views in `bi` schema
-- `validation/validate_views.sql` - data quality checks
-- `powerbi/connection_guide.md` - Power BI connection and report build steps
+`validation/validate_views.sql` performs checks for:
+
+- Row-count completeness
+- Key-field null rates
+- Revenue sanity thresholds
+- Dynamic date-range consistency
+- Duplicate-key violations
+
+Latest validation status:
+
+- `29 / 29` checks passed
+- Ready for Power BI: `YES`
+
+## Notable Outcomes
+
+- Built a modular SQL reporting layer with reusable business metrics
+- Identified territory and product concentration patterns in revenue
+- Quantified channel mix (`online_pct`) and trend anomalies
+- Produced insight documentation with business impact and action recommendations
+
+## Project Structure
+
+- `db/setup.sql` - schema bootstrap, grants, helper functions
+- `db/views/*.sql` - analytical view definitions
+- `validation/validate_views.sql` - quality checks
+- `powerbi/connection_guide.md` - report build instructions
 - `powerbi/model_guide.md` - semantic model design
 - `powerbi/dax_measures.md` - suggested DAX measures
 - `docs/business_questions.md` - business framing
-- `docs/schema_diagram.md` - source schema walkthrough
-- `docs/insights.md` - quantified business insights
-- `screenshots/README.md` - screenshot naming checklist
+- `docs/schema_diagram.md` - source model walkthrough
+- `docs/insights.md` - final insight write-up
+- `screenshots/README.md` - screenshot checklist for portfolio use
 
-## Setup and Run Order
+## Run Order
 
 1. Execute `db/setup.sql`
-2. Execute `db/views/00_vw_date_dimension.sql`
-3. Execute `db/views/06_vw_executive_kpis.sql`
-4. Execute `db/views/01_vw_sales_summary.sql`
-5. Execute `db/views/02_vw_product_performance.sql`
-6. Execute `db/views/03_vw_customer_analytics.sql`
-7. Execute `db/views/04_vw_hr_workforce.sql`
-8. Execute `db/views/05_vw_anomaly_variance.sql`
-9. Execute `validation/validate_views.sql`
-10. Build Power BI report pages using `powerbi/connection_guide.md`
-
-## Validation Status (Latest Run)
-
-- Created all target `bi` views successfully
-- Validation result: `29 / 29` checks passed
-- Ready for Power BI: `YES`
-
-## Key Insights Produced
-
-- Revenue concentration is highest in North America (Southwest, Canada, Northwest)
-- Top product revenue is dominated by Mountain-200 variants
-- Online channel contributes `26.73%` of subtotal revenue
-- Latest month appears to be a partial period and should be flagged in KPI logic
-
-See `docs/insights.md` for the full evidence and recommended actions.
-
-## Portfolio Output Checklist
-
-- [ ] Build 5-page Power BI report
-- [ ] Export screenshots in `screenshots/`
-- [ ] Publish to Power BI Service with refresh configuration
+2. Execute all files in `db/views/` in the documented order
+3. Execute `validation/validate_views.sql`
+4. Build dashboard pages using `powerbi/connection_guide.md`
 
 ## Notes
 
-- SQL assumes lowercase snake_case PostgreSQL AdventureWorks naming.
-- Update names if your source schema differs.
-- `powerbi_reader` is designed as a read-only reporting role.
+- SQL targets lowercase snake_case AdventureWorks PostgreSQL schema naming
+- `powerbi_reader` is configured as a read-only reporting role
