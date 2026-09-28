@@ -1,8 +1,14 @@
+"""Normalise the AdventureWorks OLTP CSV exports into tab-separated files under tmp/.
+
+Usage: python db/prepare_source_files.py <folder containing the AdventureWorks *.csv exports>
+The tab-separated output is already committed in tmp/, so this is only needed to rebuild it.
+"""
+import sys
 from pathlib import Path
 
 
-ROOT = Path(r"c:\Users\vaibh\OneDrive\Desktop\AdventureWorks-oltp")
-OUT = ROOT / "adventureworks-bi" / "tmp"
+ROOT = Path(sys.argv[1]) if len(sys.argv) > 1 else Path.cwd()
+OUT = Path(__file__).resolve().parents[1] / "tmp"
 
 FILES = [
     "SalesOrderHeader.csv",
