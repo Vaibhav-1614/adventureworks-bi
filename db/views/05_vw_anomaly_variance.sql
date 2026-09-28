@@ -52,6 +52,8 @@ stats AS (
         MIN(ml.value) OVER (PARTITION BY ml.metric_category, ml.entity_name) AS historical_min,
         MAX(ml.value) OVER (PARTITION BY ml.metric_category, ml.entity_name) AS historical_max
     FROM metric_long ml
+    -- Score complete months only; a partially loaded month always looks like a DROP.
+    WHERE (make_date(ml.year, ml.month, 1) + interval '1 month' - interval '1 day')::date <= (SELECT bi.as_of_date())
 ),
 scored AS (
     SELECT

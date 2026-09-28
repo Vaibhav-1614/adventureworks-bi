@@ -65,8 +65,8 @@ rfm_prep AS (
         cb.territory_name,
         cs.first_order_date,
         cs.last_order_date,
-        bi.days_between(cs.first_order_date, CURRENT_DATE) AS tenure_days,
-        bi.days_between(cs.last_order_date, CURRENT_DATE) AS recency_days,
+        bi.days_between(cs.first_order_date, (SELECT bi.as_of_date())) AS tenure_days,
+        bi.days_between(cs.last_order_date, (SELECT bi.as_of_date())) AS recency_days,
         cs.frequency,
         cs.monetary,
         bi.safe_divide(cs.monetary, cs.frequency) AS avg_order_value
@@ -77,7 +77,8 @@ rfm_prep AS (
 scored AS (
     SELECT
         r.*,
-        6 - NTILE(5) OVER (ORDER BY r.recency_days DESC) AS r_score,
+        -- Oldest purchases land in tile 1, most recent in tile 5 (5 = best recency).
+        NTILE(5) OVER (ORDER BY r.recency_days DESC) AS r_score,
         NTILE(5) OVER (ORDER BY r.frequency ASC) AS f_score,
         NTILE(5) OVER (ORDER BY r.monetary ASC) AS m_score
     FROM rfm_prep r

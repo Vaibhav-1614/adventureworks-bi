@@ -59,7 +59,10 @@ SELECT
     ) AS cumulative_revenue,
     b.online_revenue,
     b.offline_revenue,
-    bi.safe_divide(b.online_revenue, b.total_revenue) * 100 AS online_pct
+    bi.safe_divide(b.online_revenue, b.total_revenue) * 100 AS online_pct,
+    -- FALSE for the trailing month when the extract stops mid-month; filter on this in
+    -- executive visuals so a partial month is not read as a revenue collapse.
+    ((make_date(b.year, b.month, 1) + interval '1 month' - interval '1 day')::date <= (SELECT bi.as_of_date())) AS is_complete_month
 FROM base b
 ORDER BY b.year, b.month;
 

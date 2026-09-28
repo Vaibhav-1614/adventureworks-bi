@@ -28,21 +28,22 @@ SELECT
     d.group_name,
     e.hire_date,
     e.birth_date,
-    bi.days_between(e.hire_date, CURRENT_DATE) / 365.0 AS tenure_years,
-    bi.days_between(e.birth_date, CURRENT_DATE) / 365.0 AS age,
+    bi.days_between(e.hire_date, (SELECT bi.as_of_date())) / 365.0 AS tenure_years,
+    bi.days_between(e.birth_date, (SELECT bi.as_of_date())) / 365.0 AS age,
     CASE
-        WHEN bi.days_between(e.birth_date, CURRENT_DATE) / 365.0 < 25 THEN '<25'
-        WHEN bi.days_between(e.birth_date, CURRENT_DATE) / 365.0 < 35 THEN '25-34'
-        WHEN bi.days_between(e.birth_date, CURRENT_DATE) / 365.0 < 45 THEN '35-44'
-        WHEN bi.days_between(e.birth_date, CURRENT_DATE) / 365.0 < 55 THEN '45-54'
+        WHEN bi.days_between(e.birth_date, (SELECT bi.as_of_date())) / 365.0 < 25 THEN '<25'
+        WHEN bi.days_between(e.birth_date, (SELECT bi.as_of_date())) / 365.0 < 35 THEN '25-34'
+        WHEN bi.days_between(e.birth_date, (SELECT bi.as_of_date())) / 365.0 < 45 THEN '35-44'
+        WHEN bi.days_between(e.birth_date, (SELECT bi.as_of_date())) / 365.0 < 55 THEN '45-54'
         ELSE '55+'
     END AS age_band,
     CASE
-        WHEN bi.days_between(e.hire_date, CURRENT_DATE) / 365.0 < 1 THEN '<1yr'
-        WHEN bi.days_between(e.hire_date, CURRENT_DATE) / 365.0 < 3 THEN '1-3yr'
-        WHEN bi.days_between(e.hire_date, CURRENT_DATE) / 365.0 < 5 THEN '3-5yr'
-        WHEN bi.days_between(e.hire_date, CURRENT_DATE) / 365.0 < 10 THEN '5-10yr'
-        ELSE '10yr+'
+        WHEN bi.days_between(e.hire_date, (SELECT bi.as_of_date())) / 365.0 < 1 THEN '<1yr'
+        WHEN bi.days_between(e.hire_date, (SELECT bi.as_of_date())) / 365.0 < 3 THEN '1-3yr'
+        WHEN bi.days_between(e.hire_date, (SELECT bi.as_of_date())) / 365.0 < 5 THEN '3-5yr'
+        WHEN bi.days_between(e.hire_date, (SELECT bi.as_of_date())) / 365.0 < 10 THEN '5-10yr'
+        WHEN bi.days_between(e.hire_date, (SELECT bi.as_of_date())) / 365.0 < 15 THEN '10-15yr'
+        ELSE '15yr+'
     END AS tenure_band,
     lp.current_pay_rate,
     lp.pay_frequency,

@@ -25,7 +25,8 @@ quota_quarter AS (
         sqh.business_entity_id AS salesperson_id,
         EXTRACT(YEAR FROM sqh.quota_date)::int AS year,
         'Q' || EXTRACT(QUARTER FROM sqh.quota_date)::int AS quarter,
-        AVG(sqh.sales_quota)::numeric AS quota
+        -- Quotas are set per quarter; rows here are monthly, so compare against a third of it.
+        (AVG(sqh.sales_quota) / 3)::numeric AS quota
     FROM sales.sales_person_quota_history sqh
     GROUP BY 1, 2, 3
 ),
@@ -43,7 +44,20 @@ joined AS (
         sm.total_orders,
         sm.total_units,
         bi.safe_divide(sm.total_revenue, sm.total_orders) AS avg_order_value,
-        COALESCE(qq.quota, 0)::numeric AS quota
+        -- A rep can sell into several territories in one month (one row each). Split the
+        -- monthly quota across those rows by revenue share so it is not counted once per row;
+        -- summed per rep-month it equals the real quota, and each row's attainment equals the
+        -- rep's attainment for that month.
+        (
+            COALESCE(qq.quota, 0)
+            * COALESCE(
+                bi.safe_divide(
+                    sm.total_revenue,
+                    SUM(sm.total_revenue) OVER (PARTITION BY sm.salesperson_id, sm.year, sm.month)
+                ),
+                0
+            )
+        )::numeric AS quota
     FROM sales_monthly sm
     JOIN sales.sales_person sp
       ON sp.business_entity_id = sm.salesperson_id
