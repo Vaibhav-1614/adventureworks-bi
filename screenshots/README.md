@@ -1,16 +1,12 @@
-# Screenshot Checklist for Portfolio
+# Screenshots
 
-Save final dashboard screenshots here with clear names:
+Captured from the web dashboard (`dashboard/app.py`) running against the `bi.*` views:
 
-- `01_executive_summary.png`
-- `02_sales_performance.png`
-- `03_product_intelligence.png`
-- `04_customer_analytics.png`
-- `05_anomaly_report.png`
+- `01_executive_summary.png`: revenue by channel, quarterly revenue, AOV trend
+- `02_sales_performance.png`: quota attainment by salesperson, revenue by territory
+- `03_product_intelligence.png`: revenue and margin treemap, top products, category trend
+- `04_customer_analytics.png`: RFM segments, lifetime value, new vs returning customers
+- `05_anomaly_report.png`: z-score anomalies for the last three complete months
 
-Tips:
-
-- Use a 16:9 canvas and consistent theme across pages.
-- Keep slicers visible in screenshots to show interactivity.
-- Highlight one KPI card and one chart per page with clean spacing.
-- Use Page 1 as your resume/LinkedIn preview image.
+If you build the Power BI version, save its pages here with the same names.
+Use a 16:9 canvas, keep slicers visible, and use page 1 as the resume or LinkedIn preview image.
