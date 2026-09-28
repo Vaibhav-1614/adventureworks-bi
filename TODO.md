@@ -9,17 +9,15 @@
 - [x] DAX starter measures documented (`powerbi/dax_measures.md`).
 - [x] Business framing and schema notes documented (`docs/business_questions.md`, `docs/schema_diagram.md`).
 - [x] Insight write-up completed with concrete metrics (`docs/insights.md`).
+- [x] Execute SQL scripts against PostgreSQL in the documented run order.
+- [x] Run `validation/validate_views.sql` (29/29 passing).
+- [x] Resolve validation findings (duplicate keys + date-range checks now passing).
+- [x] Fix RFM recency direction, quota double-counting, and `CURRENT_DATE` anchoring.
+- [x] Bootstrap runs from a fresh clone (relative paths, keys and indexes).
+- [x] Web dashboard with the five report pages (`dashboard/app.py`).
+- [x] Portfolio screenshots saved in `screenshots/` (`01`–`05`).
 
 ## Remaining (Manual)
 
-- [x] Execute SQL scripts against PostgreSQL in the documented run order.
-- [x] Run `validation/validate_views.sql`.
-- [x] Resolve validation findings (duplicate keys + date-range checks now passing).
 - [ ] Build the Power BI report pages using `powerbi/connection_guide.md`.
-- [ ] Save portfolio screenshots in `screenshots/`:
-  - [ ] `01_executive_summary.png`
-  - [ ] `02_sales_performance.png`
-  - [ ] `03_product_intelligence.png`
-  - [ ] `04_customer_analytics.png`
-  - [ ] `05_anomaly_report.png`
 - [ ] Publish report to Power BI Service and verify refresh settings.

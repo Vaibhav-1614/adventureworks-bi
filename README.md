@@ -1,85 +1,107 @@
-# AdventureWorks BI: PostgreSQL to Power BI Analytics Platform
+# AdventureWorks BI: PostgreSQL Analytics Layer + BI Dashboard
 
-End-to-end business intelligence project that transforms AdventureWorks OLTP data into a validated analytics layer and a multi-page Power BI reporting solution for executive and operational decision-making.
+End-to-end business intelligence project that turns AdventureWorks OLTP data into a validated PostgreSQL analytics layer (`bi.*` views) with a five-page reporting solution for executive and operational decisions. The report is specified for Power BI and also implemented as a runnable web dashboard.
+
+![Executive summary](screenshots/01_executive_summary.png)
 
 ## Overview
 
 This project simulates a production BI workflow:
 
-- Model transactional data into reusable analytical views in PostgreSQL
-- Validate output quality with automated SQL checks
-- Design a Power BI semantic model and dashboard pages
-- Document business insights and stakeholder-facing outputs
+- Load the OLTP extract into PostgreSQL (`db/bootstrap_adventureworks.sql`)
+- Model it into reusable analytical views with CTEs and window functions
+- Validate the output with automated SQL checks (29/29 passing)
+- Serve five report pages: a web dashboard (`dashboard/app.py`) plus the Power BI model, DAX, and page specifications (`powerbi/`)
+- Document business insights and recommended actions (`docs/insights.md`)
 
 ## Business Questions Answered
 
 - How are revenue, orders, and average order value trending over time?
-- Which territories, salespeople, and products drive performance?
+- Which territories, salespeople, and products drive performance, and who is above or below quota?
 - Which customer segments create the most value and where is risk increasing?
-- Which KPI movements are anomalous relative to historical behavior?
+- Which KPI movements are anomalous relative to historical behaviour?
+
+## Dashboard
+
+| Sales Performance | Product Intelligence |
+|---|---|
+| ![Sales performance](screenshots/02_sales_performance.png) | ![Product intelligence](screenshots/03_product_intelligence.png) |
+| **Customer Analytics** | **Anomaly Report** |
+| ![Customer analytics](screenshots/04_customer_analytics.png) | ![Anomaly report](screenshots/05_anomaly_report.png) |
+
+Headline numbers (May 2022 – Jun 2025): **$109.8M revenue**, 30.6K orders, 8.5% gross margin (bikes run at about 5% while accessories run above 50%), **87% overall quota attainment**, and Champions (13% of customers) generating **69% of customer revenue**.
 
 ## Tech Stack
 
-- PostgreSQL
-- SQL (CTEs, window functions, aggregations, validation queries)
-- Power BI Desktop
+- PostgreSQL 16 (CTEs, window functions, `LATERAL` joins, SQL functions)
+- SQL validation suite
+- Streamlit + Plotly web dashboard
+- Power BI Desktop specification (semantic model, DAX measures, page layouts)
 
 ## Analytics Layer
 
-Implemented BI views in schema `bi`:
+Views in schema `bi`:
 
-- `bi.vw_date_dimension`
-- `bi.vw_executive_kpis`
-- `bi.vw_sales_summary`
-- `bi.vw_product_performance`
-- `bi.vw_customer_rfm`
-- `bi.vw_customer_monthly`
-- `bi.vw_hr_workforce`
-- `bi.vw_anomaly_variance`
+| View | Grain | Purpose |
+|---|---|---|
+| `vw_date_dimension` | day | calendar attributes for time intelligence |
+| `vw_executive_kpis` | month | revenue, orders, AOV, MoM/YoY, QTD/YTD, channel mix, `is_complete_month` |
+| `vw_sales_summary` | salesperson × territory × month | revenue, quota, attainment, rankings |
+| `vw_product_performance` | product × month | revenue, COGS, margin, discounts, returns, rank |
+| `vw_customer_rfm` | customer | recency / frequency / monetary scores and segment |
+| `vw_customer_monthly` | customer × month | monthly revenue, new-customer flag, cumulative value |
+| `vw_hr_workforce` | employee | department, tenure and age bands, pay, quota for salespeople |
+| `vw_anomaly_variance` | entity × month | z-score anomalies for the last three complete months |
+
+### Correctness fixes
+
+Fixed during review. Validation passed before and after, because these were logic errors rather than data-quality failures.
+
+- **RFM recency score was inverted.** `6 - NTILE(5) OVER (ORDER BY recency_days DESC)` gave the *oldest* buyers the best score, so "Champions" had not ordered in 660+ days. Champions now last ordered 1–129 days before the data ends and average $31K lifetime value.
+- **Quota attainment was understated about 3×.** Quarterly quotas were compared with monthly revenue, and repeated for every territory a rep sold into in that month. The monthly quota is now a third of the quarterly quota, split across territory rows by revenue share. Average rep-month attainment was about 30% with under 1% of rep-months above quota; overall attainment is now 87%, with 36% of rep-months above quota.
+- **Recency and tenure used `CURRENT_DATE`.** The data is a historical snapshot, so everyone fell into the same bucket (no "New" customers, every employee "10yr+"). Metrics are now anchored to `bi.as_of_date()`, the last order date.
+- **Partial final month.** The extract stops on 29 Jun 2025. `vw_executive_kpis.is_complete_month` flags it, and the anomaly view scores complete months only, so a partial month is not reported as a -97% revenue collapse.
+- **Performance.** The bootstrap now adds primary keys and join indexes. The full rebuild plus validation dropped from over 3 minutes to about 8 seconds.
 
 ## Data Quality and Validation
 
-`validation/validate_views.sql` performs checks for:
+`validation/validate_views.sql` checks row-count completeness, key-field null rates, revenue sanity thresholds, dynamic date-range consistency, and duplicate keys.
 
-- Row-count completeness
-- Key-field null rates
-- Revenue sanity thresholds
-- Dynamic date-range consistency
-- Duplicate-key violations
-
-Latest validation status:
-
-- `29 / 29` checks passed
-- Ready for Power BI: `YES`
-
-## Notable Outcomes
-
-- Built a modular SQL reporting layer with reusable business metrics
-- Identified territory and product concentration patterns in revenue
-- Quantified channel mix (`online_pct`) and trend anomalies
-- Produced insight documentation with business impact and action recommendations
+Latest validation status: **29 / 29 checks passed**, Ready for Power BI: **YES**.
 
 ## Project Structure
 
-- `db/setup.sql` - schema bootstrap, grants, helper functions
-- `db/views/*.sql` - analytical view definitions
-- `validation/validate_views.sql` - quality checks
-- `powerbi/connection_guide.md` - report build instructions
-- `powerbi/model_guide.md` - semantic model design
-- `powerbi/dax_measures.md` - suggested DAX measures
-- `docs/business_questions.md` - business framing
-- `docs/schema_diagram.md` - source model walkthrough
-- `docs/insights.md` - final insight write-up
-- `screenshots/README.md` - screenshot checklist for portfolio use
+- `db/bootstrap_adventureworks.sql`: creates the source schemas, loads `tmp/*.tsv`, adds keys and indexes
+- `db/setup.sql`: `bi` schema, read-only `powerbi_reader` role, helper functions
+- `db/views/*.sql`: analytical view definitions (run in numeric order)
+- `validation/validate_views.sql`: quality checks
+- `dashboard/app.py`: five-page Streamlit dashboard over the `bi` views
+- `powerbi/`: Power BI connection guide, semantic model, DAX measures
+- `docs/`: business questions, schema walkthrough, insights
+- `tmp/`: AdventureWorks OLTP extract as tab-separated files
 
 ## Run Order
 
-1. Execute `db/setup.sql`
-2. Execute all files in `db/views/` in the documented order
-3. Execute `validation/validate_views.sql`
-4. Build dashboard pages using `powerbi/connection_guide.md`
+Run from the repository root (the bootstrap loads `tmp/*.tsv` with relative paths):
+
+```bash
+createdb adventureworks
+psql -d adventureworks -f db/bootstrap_adventureworks.sql
+psql -d adventureworks -v powerbi_reader_password='choose-a-password' -f db/setup.sql
+for f in db/views/*.sql; do psql -d adventureworks -f "$f"; done
+psql -d adventureworks -f validation/validate_views.sql
+```
+
+Launch the dashboard:
+
+```bash
+python -m pip install -r requirements.txt
+AW_DATABASE_URL=postgresql+psycopg2://postgres:password@localhost:5432/adventureworks streamlit run dashboard/app.py
+```
+
+To build the Power BI version, follow `powerbi/connection_guide.md` and connect as `powerbi_reader`.
 
 ## Notes
 
-- SQL targets lowercase snake_case AdventureWorks PostgreSQL schema naming
-- `powerbi_reader` is configured as a read-only reporting role
+- SQL targets lowercase snake_case AdventureWorks PostgreSQL naming.
+- `powerbi_reader` is a read-only reporting role. Its password is supplied at run time with `-v powerbi_reader_password=...` and is never committed.
